@@ -3,4 +3,7 @@
 *.ipr
 *.iws
 
-*/target/
+**/target/
+
+*TestMain.java
+*test.html
