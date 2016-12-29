@@ -133,7 +133,9 @@
                         <configuration>
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
-                            <configLocation>gizmo/checkstyle.xml</configLocation>
+                            <failOnViolation>true</failOnViolation>
+                            <configLocation>/gizmo/checkstyle.xml</configLocation>
+                            <violationSeverity>warning</violationSeverity>
                         </configuration>
                     </plugin>
                 </plugins>

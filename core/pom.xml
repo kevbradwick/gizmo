@@ -6,10 +6,12 @@
         <artifactId>gizmo</artifactId>
         <groupId>com.github.kevbradwick</groupId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gizmo-core</artifactId>
+    <name>gizmo-core</name>
 
     <properties>
         <thymeleaf.version>3.0.2.RELEASE</thymeleaf.version>
