@@ -5,4 +5,4 @@ jdk:
   - oraclejdk8
 
 before_install:
-  - mvn clean install -U -Dcheckstyle.skip=true -pl build-tools
+  - mvn clean install -U -pl build-tools -P!default
