@@ -25,6 +25,7 @@
         <project.reporting.outputEncoding>${encoding}</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <checkstyle.version>2.17</checkstyle.version>
+        <log4j.version>2.7</log4j.version>
     </properties>
 
     <developers>
@@ -77,6 +78,16 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!--<reporting>-->
         <!--<plugins>-->
