@@ -2,9 +2,13 @@ package com.github.kevbradwick.gizmo.core;
 
 import gherkin.AstBuilder;
 import gherkin.Parser;
+import gherkin.ParserException;
 import gherkin.ast.GherkinDocument;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +55,12 @@ public class Gizmo {
     public void process() {
 
         final Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
+        TemplateEngine engine = new TemplateEngine();
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("/templates/");
+        resolver.setSuffix(".html");
+        resolver.setTemplateMode("HTML5");
+        engine.setTemplateResolver(resolver);
 
         // 1. get a list of all feature files
         List<Path> paths = getFilePaths();
@@ -59,8 +69,13 @@ public class Gizmo {
         paths.forEach(p -> {
             try {
                 GherkinDocument document = parser.parse(Files.newBufferedReader(p));
-            } catch (IOException e) {
-                logger.error("Unable to read file {}", p);
+                Context context = RenderContext.from(document)
+                        .withPageTitle(document.getFeature().getName())
+                        .build();
+                String out = engine.process("feature", context);
+                logger.info("Generated output for {}", p);
+            } catch (IOException | ParserException e) {
+                logger.error("Unable to parse file {}", p);
                 throw new RuntimeException(e);
             }
         });
