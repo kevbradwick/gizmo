@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +16,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -55,12 +55,7 @@ public class Gizmo {
     public void process() {
 
         final Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
-        TemplateEngine engine = new TemplateEngine();
-        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
-        resolver.setPrefix("/templates/");
-        resolver.setSuffix(".html");
-        resolver.setTemplateMode("HTML5");
-        engine.setTemplateResolver(resolver);
+        TemplateEngine engine = TemplateEngines.defaultEngine();
 
         // 1. get a list of all feature files
         List<Path> paths = getFilePaths();
@@ -74,6 +69,20 @@ public class Gizmo {
                         .build();
                 String out = engine.process("feature", context);
                 logger.info("Generated output for {}", p);
+
+                // construct the relative output path and change file extension to .html
+                String relativeOutputPath = sourceDirectory
+                        .toURI()
+                        .relativize(p.toUri())
+                        .getPath()
+                        .replaceAll("\\.feature$", ".html");
+
+                Path outputPath = Paths.get(destinationDirectory.getCanonicalPath(), relativeOutputPath);
+                if (Files.exists(outputPath)) {
+                    Files.delete(outputPath);
+                }
+                Files.createDirectories(outputPath.getParent());
+                Files.write(outputPath, out.getBytes());
             } catch (IOException | ParserException e) {
                 logger.error("Unable to parse file {}", p);
                 throw new RuntimeException(e);
