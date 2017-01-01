@@ -1,5 +1,9 @@
 package com.github.kevbradwick.gizmo.core;
 
+import com.github.kevbradwick.gizmo.core.io.FileWriter;
+import com.github.kevbradwick.gizmo.core.io.Writer;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import gherkin.AstBuilder;
 import gherkin.Parser;
 import gherkin.ParserException;
@@ -20,55 +24,76 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Gizmo {
 
     private static final Logger logger = LogManager.getLogger(Gizmo.class);
 
+    /**
+     * Source destination directory that contains the gherkin files
+     */
     private final File sourceDirectory;
 
+    /**
+     * The directory all html files will be written to
+     */
     private final File destinationDirectory;
+
+    /**
+     * Runtime configuration
+     */
+    private static final Config config = ConfigFactory.load();
+
+    /**
+     * Thymeleaf template engine
+     */
+    private TemplateEngine templateEngine;
+
+    /**
+     * The output writer interface
+     */
+    private Writer writer;
 
     /**
      * Create a new instance of Gizmo
      *
      * @param sourceDirectory the directory containing gherkin files
      * @param destinationDirectory destination output directory
+     * @param templateEngine the thymeleaf template engine to use
      */
-    public Gizmo(File sourceDirectory, File destinationDirectory) {
+    public Gizmo(File sourceDirectory, File destinationDirectory, TemplateEngine templateEngine) {
         this.sourceDirectory = sourceDirectory;
         this.destinationDirectory = destinationDirectory;
+        this.templateEngine = templateEngine;
     }
 
-    /**
-     * @param sourceDirectory absolute path to directory containing gherkin files
-     * @param destinationDirectory absolute path to the directory to output site to
-     */
-    public Gizmo(String sourceDirectory, String destinationDirectory) {
-        this(new File(sourceDirectory), new File(destinationDirectory));
+    public Gizmo setWriter(Writer writer) {
+        this.writer = writer;
+        return this;
+    }
+
+    private Writer getWriter() {
+        if (writer == null) {
+            setWriter(new FileWriter(destinationDirectory.toPath()));
+        }
+        return writer;
     }
 
     /**
      * Generate the html site from the source directory
      */
     public void process() {
-
         final Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
-        TemplateEngine engine = TemplateEngines.defaultEngine();
-
-        // 1. get a list of all feature files
-        List<Path> paths = getFilePaths();
+        final Map<String, String> index = new HashMap<>();
+        final Writer writer = getWriter();
 
         // 2. loop through each file and parse it
-        paths.forEach(p -> {
+        getFilePaths().forEach(p -> {
             try {
                 GherkinDocument document = parser.parse(Files.newBufferedReader(p));
-                Context context = RenderContext.from(document)
-                        .withPageTitle(document.getFeature().getName())
-                        .build();
-                String out = engine.process("feature", context);
-                logger.info("Generated output for {}", p);
 
                 // construct the relative output path and change file extension to .html
                 String relativeOutputPath = sourceDirectory
@@ -77,21 +102,45 @@ public class Gizmo {
                         .getPath()
                         .replaceAll("\\.feature$", ".html");
 
+                // add file to index
+                index.put(document.getFeature().getName(), relativeOutputPath);
+
+                // calculate the directory depth
+                StringBuilder sb = new StringBuilder();
+                relativeOutputPath.chars().forEach(c -> {
+                    if (c == File.separatorChar) {
+                        sb.append("../");
+                    }
+                });
+
+                // ensure directories exist to write the file to
                 Path outputPath = Paths.get(destinationDirectory.getCanonicalPath(), relativeOutputPath);
                 if (Files.exists(outputPath)) {
                     Files.delete(outputPath);
                 }
-                Files.createDirectories(outputPath.getParent());
-                Files.write(outputPath, out.getBytes());
+
+                Context context = RenderContext.from(document)
+                        .withPageTitle(document.getFeature().getName())
+                        .withRelativeRootPath(sb.toString())
+                        .build();
+
+                String out = templateEngine.process("feature", context);
+                logger.info("Generated output for {}", p);
+
+                writer.write(out, relativeOutputPath);
             } catch (IOException | ParserException e) {
                 logger.error("Unable to parse file {}", p);
                 throw new RuntimeException(e);
             }
         });
+
+        // create index.html
+        Context context = new Context();
+        context.setVariable("index", index);
+        String indexSource = templateEngine.process("index", context);
     }
 
     /**
-     *
      * @return a list of paths containing feature files.
      */
     private List<Path> getFilePaths() {

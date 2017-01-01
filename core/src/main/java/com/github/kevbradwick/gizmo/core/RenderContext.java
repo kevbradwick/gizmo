@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class RenderContext {
+class RenderContext {
 
     /**
      *
@@ -23,6 +23,12 @@ public class RenderContext {
      * Page title
      */
     private String pageTitle;
+
+    /**
+     * path, relative to root e.g. ../../
+     * this is used to prepend to static asset urls
+     */
+    private String relativeRootPath = "";
 
     /**
      * Create a new render context.
@@ -41,7 +47,7 @@ public class RenderContext {
      * @param document the gherkin document
      * @return a new RenderContext with default locale
      */
-    public static RenderContext from(GherkinDocument document) {
+    static RenderContext from(GherkinDocument document) {
         return new RenderContext(Locale.getDefault(), document);
     }
 
@@ -52,7 +58,7 @@ public class RenderContext {
      * @param document the gherkin document
      * @return a new RenderContext
      */
-    public static RenderContext from(Locale locale, GherkinDocument document) {
+    static RenderContext from(Locale locale, GherkinDocument document) {
         return new RenderContext(locale, document);
     }
 
@@ -60,15 +66,24 @@ public class RenderContext {
      * @param title the page title
      * @return chainable render context
      */
-    public RenderContext withPageTitle(String title) {
+    RenderContext withPageTitle(String title) {
         pageTitle = title;
         return this;
     }
 
-    public Context build() {
+    /**
+     * @return chainable render context
+     */
+    RenderContext withRelativeRootPath(String path) {
+        relativeRootPath = path;
+        return this;
+    }
+
+    Context build() {
         Map<String, Object> vars = new HashMap<>();
         vars.put("pageTitle", pageTitle);
         vars.put("document", document);
+        vars.put("rootPath", relativeRootPath);
 
         return new Context(locale, vars);
     }
