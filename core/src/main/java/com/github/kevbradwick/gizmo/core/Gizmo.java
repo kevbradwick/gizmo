@@ -2,6 +2,7 @@ package com.github.kevbradwick.gizmo.core;
 
 import com.github.kevbradwick.gizmo.core.io.FileWriter;
 import com.github.kevbradwick.gizmo.core.io.Writer;
+import com.github.kevbradwick.gizmo.core.theme.DefaultTheme;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import gherkin.AstBuilder;
@@ -138,6 +139,10 @@ public class Gizmo {
         Context context = new Context();
         context.setVariable("index", index);
         String indexSource = templateEngine.process("index", context);
+        writer.write(indexSource, "index.html");
+
+        DefaultTheme theme = new DefaultTheme();
+        theme.copyStaticAssets(destinationDirectory.toPath());
     }
 
     /**

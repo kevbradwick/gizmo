@@ -13,7 +13,7 @@ public class TemplateEngines {
     public static TemplateEngine defaultEngine() {
         TemplateEngine engine = new TemplateEngine();
         ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
-        resolver.setPrefix("/templates/");
+        resolver.setPrefix("/gizmo/default-theme/templates/");
         resolver.setSuffix(".html");
         resolver.setTemplateMode("HTML5");
         engine.setTemplateResolver(resolver);
