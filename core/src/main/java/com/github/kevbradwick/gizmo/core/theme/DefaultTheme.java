@@ -5,6 +5,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 
 public class DefaultTheme implements Theme {
@@ -19,8 +20,9 @@ public class DefaultTheme implements Theme {
         Arrays.stream(new String[]{"style.css", "script.js"}).forEach(fileName -> {
             try {
                 Files.copy(
-                        getClass().getResourceAsStream("/gizmo/default-theme/static/" + fileName),
-                        Paths.get(staticDir.toString(), fileName)
+                    getClass().getResourceAsStream("/gizmo/default-theme/static/" + fileName),
+                    Paths.get(staticDir.toString(), fileName),
+                    StandardCopyOption.REPLACE_EXISTING
                 );
             } catch (FileAlreadyExistsException e) {
                 // todo logging...
