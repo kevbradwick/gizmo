@@ -15,25 +15,24 @@ public class FileWriter implements Writer {
     /**
      * Files will be written to this directory.
      */
-    private final Path destinationDirectory;
+    private Path destinationPath;
 
-    /**
-     * Creates an instance of a FileWriter.
-     *
-     * @param destinationDirectory the output file
-     */
-    public FileWriter(Path destinationDirectory) {
-        this.destinationDirectory = destinationDirectory;
+    public FileWriter setDestinationPath(Path destinationPath) {
+        this.destinationPath = destinationPath;
+        return this;
     }
 
     @Override
     public void write(String content, String fileName) {
+        if (destinationPath == null) {
+            throw new RuntimeException("The FileWriter has not been set a destination path");
+        }
         try {
-            Path to = Paths.get(destinationDirectory.toString(), fileName);
+            Path to = Paths.get(destinationPath.toString(), fileName);
             Files.createDirectories(to.getParent());
             Files.write(to, content.getBytes());
         } catch (IOException e) {
-            logger.error("Unable to write to {}", destinationDirectory);
+            logger.error("Unable to write to {}", destinationPath);
             throw new RuntimeException(e);
         }
     }

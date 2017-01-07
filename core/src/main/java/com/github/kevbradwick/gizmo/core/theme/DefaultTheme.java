@@ -10,9 +10,7 @@ import java.util.Arrays;
 
 public class DefaultTheme implements Theme {
 
-    private static final String INDEX_TEMPLATE = "index";
-    private static final String FEATURE_TEMPLATE = "feature";
-
+    @Override
     public void copyStaticAssets(Path destination) {
         Path staticDir = Paths.get(destination.toString(), "static");
         ensureDirectories(staticDir);
@@ -31,6 +29,16 @@ public class DefaultTheme implements Theme {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    @Override
+    public String getIndexTemplateName() {
+        return "index";
+    }
+
+    @Override
+    public String getFeatureTemplateName() {
+        return "feature";
     }
 
     private void ensureDirectories(Path path) {

@@ -3,6 +3,7 @@ package com.github.kevbradwick.gizmo.core;
 import com.github.kevbradwick.gizmo.core.io.FileWriter;
 import com.github.kevbradwick.gizmo.core.io.Writer;
 import com.github.kevbradwick.gizmo.core.theme.DefaultTheme;
+import com.github.kevbradwick.gizmo.core.theme.Theme;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import gherkin.AstBuilder;
@@ -58,6 +59,8 @@ public class Gizmo {
      */
     private Writer writer;
 
+    private Theme theme = new DefaultTheme();
+
     /**
      * Create a new instance of Gizmo
      *
@@ -69,6 +72,16 @@ public class Gizmo {
         this.sourceDirectory = sourceDirectory;
         this.destinationDirectory = destinationDirectory;
         this.templateEngine = templateEngine;
+
+        // default output writer
+        FileWriter writer = new FileWriter();
+        writer.setDestinationPath(destinationDirectory.toPath());
+        this.writer = writer;
+    }
+
+    public Gizmo setTheme(Theme theme) {
+        this.theme = theme;
+        return this;
     }
 
     public Gizmo setWriter(Writer writer) {
@@ -76,20 +89,15 @@ public class Gizmo {
         return this;
     }
 
-    private Writer getWriter() {
-        if (writer == null) {
-            setWriter(new FileWriter(destinationDirectory.toPath()));
-        }
-        return writer;
-    }
-
     /**
      * Generate the html site from the source directory
      */
     public void process() {
+        Util.assertNotNull(destinationDirectory, "No destination directory has been set");
+        Util.assertNotNull(sourceDirectory, "No source directory has been set");
+
         final Parser<GherkinDocument> parser = new Parser<>(new AstBuilder());
         final Map<String, String> index = new HashMap<>();
-        final Writer writer = getWriter();
 
         // 2. loop through each file and parse it
         getFilePaths().forEach(p -> {
@@ -125,7 +133,7 @@ public class Gizmo {
                         .withRelativeRootPath(sb.toString())
                         .build();
 
-                String out = templateEngine.process("feature", context);
+                String out = templateEngine.process(theme.getFeatureTemplateName(), context);
                 logger.info("Generated output for {}", p);
 
                 writer.write(out, relativeOutputPath);
@@ -138,7 +146,7 @@ public class Gizmo {
         // create index.html
         Context context = new Context();
         context.setVariable("index", index);
-        String indexSource = templateEngine.process("index", context);
+        String indexSource = templateEngine.process(theme.getIndexTemplateName(), context);
         writer.write(indexSource, "index.html");
 
         DefaultTheme theme = new DefaultTheme();
