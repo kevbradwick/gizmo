@@ -2,6 +2,7 @@ package com.github.kevbradwick.gizmo.core.theme;
 
 
 import java.nio.file.Path;
+import java.util.List;
 
 public interface Theme {
 
@@ -9,5 +10,5 @@ public interface Theme {
 
     String getFeatureTemplateName();
 
-    void copyStaticAssets(Path destination);
+    List<Path> getStaticAssets();
 }

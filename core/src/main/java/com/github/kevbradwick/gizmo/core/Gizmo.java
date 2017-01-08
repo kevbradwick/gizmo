@@ -1,5 +1,6 @@
 package com.github.kevbradwick.gizmo.core;
 
+import com.github.kevbradwick.gizmo.core.io.FileUtil;
 import com.github.kevbradwick.gizmo.core.io.FileWriter;
 import com.github.kevbradwick.gizmo.core.io.Writer;
 import com.github.kevbradwick.gizmo.core.theme.DefaultTheme;
@@ -59,7 +60,15 @@ public class Gizmo {
      */
     private Writer writer;
 
+    /**
+     * Project theme
+     */
     private Theme theme = new DefaultTheme();
+
+    /**
+     * File helper utility class
+     */
+    private FileUtil fileUtil = new FileUtil();
 
     /**
      * Create a new instance of Gizmo
@@ -86,6 +95,11 @@ public class Gizmo {
 
     public Gizmo setWriter(Writer writer) {
         this.writer = writer;
+        return this;
+    }
+
+    public Gizmo setFileUtil(FileUtil fileUtil) {
+        this.fileUtil = fileUtil;
         return this;
     }
 
@@ -149,8 +163,10 @@ public class Gizmo {
         String indexSource = templateEngine.process(theme.getIndexTemplateName(), context);
         writer.write(indexSource, "index.html");
 
-        DefaultTheme theme = new DefaultTheme();
-        theme.copyStaticAssets(destinationDirectory.toPath());
+        // copy static assets
+        theme.getStaticAssets().forEach(p -> {
+            fileUtil.copyFile(p, Paths.get(destinationDirectory.toString(), "static", p.getFileName().toString()));
+        });
     }
 
     /**
